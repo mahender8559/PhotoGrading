@@ -2,18 +2,18 @@
 setlocal
 cd /d "%~dp0"
 
-py -3.11 --version >nul 2>&1
+py -3.14 --version >nul 2>&1
 if errorlevel 1 (
-    echo Python 3.11 was not found.
-    echo Install Python 3.11 from https://www.python.org/downloads/windows/
-    echo Make sure the Python Launcher is installed, then run this file again.
+    echo Compatible Python was not found (need Python 3.14 or 3.11).
+    echo Install Python 3.14 from https://www.python.org/downloads/release/python-31410/ (recommended), or Python 3.11.
+    echo Install the Python Launcher / Python install manager too, then run this file again.
     pause
     exit /b 1
 )
 
 if not exist ".venv\Scripts\python.exe" (
     echo Creating virtual environment...
-    py -3.11 -m venv .venv
+    %PY_CMD% -m venv .venv
     if errorlevel 1 goto failed
 )
 
