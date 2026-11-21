@@ -106,3 +106,38 @@ def test_output_never_overwrites_original(tmp_path):
     recipe = {"version": 1, "global": {}, "output": {"format": "preserve", "suffix": ""}}
     with pytest.raises(ValueError, match="overwrite the original"):
         process_file(source, recipe, tmp_path)
+
+
+def test_heic_input_is_decoded_and_preserve_exports_jpeg(tmp_path):
+    pytest.importorskip("pillow_heif")
+
+    source = tmp_path / "phone_photo.heic"
+    Image.new("RGB", (16, 10), (80, 100, 120)).save(source, format="HEIF", quality=95)
+
+    # Exercise the same in-memory upload path used by the Streamlit interface.
+    from io import BytesIO
+    from photograding.processor import load_image
+
+    loaded = load_image(BytesIO(source.read_bytes()), filename=source.name)
+    assert loaded.size == (16, 10)
+    assert loaded.info["_source_format"] in {"HEIF", "HEIC"}
+
+    recipe = {"version": 1, "global": {}, "output": {"format": "preserve"}}
+    result = process_file(source, recipe, tmp_path / "output")
+    assert result.suffix == ".jpeg"
+    with Image.open(result) as exported:
+        assert exported.format == "JPEG"
+        assert exported.size == (16, 10)
+
+
+def test_load_image_applies_exif_orientation(tmp_path):
+    from photograding.processor import load_image
+
+    source = tmp_path / "oriented.jpg"
+    image = Image.new("RGB", (12, 8), (120, 80, 40))
+    exif = Image.Exif()
+    exif[274] = 6
+    image.save(source, format="JPEG", exif=exif.tobytes())
+
+    loaded = load_image(source)
+    assert loaded.size == (8, 12)
