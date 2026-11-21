@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "global": {
+    "exposure_ev": 0.25,
+    "contrast": 1.05,
+    "brightness": 0.0,
+    "highlights": -12,
+    "shadows": 18,
+    "temperature": 5,
+    "tint": 1,
+    "saturation": 4,
+    "vibrance": 10,
+    "red_gain": 1.0,
+    "green_gain": 1.0,
+    "blue_gain": 1.0,
+    "gamma": 1.0,
+    "vignette": 0.0,
+    "grain": 0.0,
+    "sharpen": 0.0
+  },
+  "curves": {
+    "master": [[0, 0], [32, 25], [128, 132], [220, 232], [255, 255]]
+  },
+  "hsl": {
+    "orange": {"hue": 0, "saturation": 3, "luminance": 4},
+    "green": {"hue": -5, "saturation": -8, "luminance": 0},
+    "blue": {"hue": 0, "saturation": -5, "luminance": -2}
+  },
+  "regions": [
+    {
+      "name": "face-light-example",
+      "rectangle": [100, 80, 240, 300],
+      "feather": 24,
+      "adjustments": {"exposure_ev": 0.15, "shadows": 8}
+    },
+    {
+      "name": "background-example",
+      "polygon": [[0, 0], [900, 0], [900, 500], [0, 500]],
+      "feather": 30,
+      "adjustments": {"exposure_ev": -0.10, "saturation": -5}
+    }
+  ],
+  "output": {
+    "format": "preserve",
+    "quality": 95,
+    "suffix": "_graded",
+    "max_width": null,
+    "max_height": null
+  }
+}
