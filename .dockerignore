@@ -1,0 +1,12 @@
+.git
+.github
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.streamlit
+data
+output
+*.log
+.DS_Store
+Thumbs.db
