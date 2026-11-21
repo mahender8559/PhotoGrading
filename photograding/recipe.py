@@ -121,6 +121,9 @@ def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     output_format = output.get("format", "preserve")
     if not isinstance(output_format, str) or output_format.lower() not in {"preserve", "jpeg", "jpg", "png", "webp"}:
         raise RecipeError("output.format must be preserve/jpeg/png/webp")
+    suffix = output.get("suffix", "_graded")
+    if not isinstance(suffix, str) or "/" in suffix or "\\" in suffix:
+        raise RecipeError("output.suffix must be a filename suffix without path separators")
     quality = output.get("quality", 95)
     if isinstance(quality, bool) or not isinstance(quality, int) or not 1 <= quality <= 100:
         raise RecipeError("output.quality must be an integer from 1 to 100")
