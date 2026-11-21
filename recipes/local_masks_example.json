@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "global": {
+    "exposure_ev": 0.0,
+    "contrast": 1.0,
+    "saturation": 0,
+    "temperature": 0,
+    "tint": 0
+  },
+  "regions": [
+    {
+      "name": "example-local-brightening",
+      "rectangle": [100, 80, 220, 300],
+      "feather": 28,
+      "adjustments": {
+        "exposure_ev": 0.25,
+        "shadows": 12
+      }
+    },
+    {
+      "name": "example-mask-background",
+      "mask": "background_mask.png",
+      "feather": 8,
+      "adjustments": {
+        "exposure_ev": -0.15,
+        "saturation": -8,
+        "temperature": -5
+      }
+    }
+  ],
+  "output": {
+    "format": "preserve",
+    "quality": 95,
+    "suffix": "_graded",
+    "max_width": null,
+    "max_height": null
+  }
+}
