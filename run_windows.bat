@@ -2,17 +2,31 @@
 setlocal
 cd /d "%~dp0"
 
+REM Prefer Python 3.14; fall back to the CI-tested Python 3.11.
 py -3.14 --version >nul 2>&1
-if errorlevel 1 (
-    echo Compatible Python was not found (need Python 3.14 or 3.11).
-    echo Install Python 3.14 from https://www.python.org/downloads/release/python-31410/ (recommended), or Python 3.11.
-    echo Install the Python Launcher / Python install manager too, then run this file again.
-    pause
-    exit /b 1
+if not errorlevel 1 (
+    set "PY_CMD=py -3.14"
+) else (
+    py -3.11 --version >nul 2>&1
+    if not errorlevel 1 (
+        set "PY_CMD=py -3.11"
+    ) else (
+        echo Compatible Python was not found. This project currently targets Python 3.14 or 3.11.
+        echo Python 3.15 is not yet part of our tested setup because the OpenCV wheel support
+        echo currently lists Python versions only through 3.14.
+        echo.
+        echo Install Python 3.14 from:
+        echo https://www.python.org/downloads/release/python-31410/
+        echo Also install the Python Launcher / Python install manager.
+        echo Then open a NEW terminal and run: py install 3.14
+        echo Finally double-click this file again.
+        pause
+        exit /b 1
+    )
 )
 
 if not exist ".venv\Scripts\python.exe" (
-    echo Creating virtual environment...
+    echo Creating virtual environment using %PY_CMD%...
     %PY_CMD% -m venv .venv
     if errorlevel 1 goto failed
 )
