@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from io import BytesIO
+import tempfile
 import time
 
 import streamlit as st
@@ -28,6 +29,12 @@ with st.sidebar:
 
 photo = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "webp", "tif", "tiff", "bmp"])
 recipe_text = st.text_area("Editing parameters (JSON)", recipe_text, height=440)
+mask_uploads = st.file_uploader(
+    "Optional mask images referenced by the recipe",
+    type=["png", "jpg", "jpeg", "bmp", "tif", "tiff"],
+    accept_multiple_files=True,
+    help="For each region with a \"mask\" path, upload a file with the same filename. White applies the edit; black protects the pixel."
+)
 
 if photo:
     try:
@@ -36,10 +43,24 @@ if photo:
         raw = Image.open(photo)
         source_format = (raw.format or Path(photo.name).suffix.lstrip(".") or "JPEG").upper()
         image = ImageOps.exif_transpose(raw).convert("RGB")
-        arr = np.asarray(image)
-        started = time.perf_counter()
-        edited = process_array(arr, recipe)
-        elapsed = time.perf_counter() - started
+        # Uploaded masks are copied into a temporary workspace for this run.
+        with tempfile.TemporaryDirectory(prefix="photograding_masks_") as mask_dir:
+            uploaded_by_name = {}
+            for mask_file in mask_uploads:
+                safe_name = Path(mask_file.name).name
+                target = Path(mask_dir) / safe_name
+                target.write_bytes(mask_file.getvalue())
+                uploaded_by_name[safe_name.lower()] = str(target)
+            for region in recipe.get("regions", []):
+                if "mask" in region:
+                    requested_name = Path(region["mask"]).name.lower()
+                    if requested_name in uploaded_by_name:
+                        region["mask"] = uploaded_by_name[requested_name]
+            recipe["_recipe_dir"] = mask_dir
+            arr = np.asarray(image)
+            started = time.perf_counter()
+            edited = process_array(arr, recipe)
+            elapsed = time.perf_counter() - started
         st.caption(f"Processed {image.width:,} × {image.height:,} ({image.width * image.height / 1_000_000:.1f} MP) in {elapsed:.3f} seconds.")
         left, right = st.columns(2)
         with left:
