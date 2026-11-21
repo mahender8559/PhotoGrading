@@ -23,10 +23,12 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
-Open the local URL printed by Streamlit (normally http://localhost:8501).
+Or double-click `run_windows.bat` to create the virtual environment, install dependencies and launch the app.
+
+Open the local URL printed by Streamlit (normally http://localhost:8501). The app displays processing time and input resolution so you can compare performance across your photos.
 
 ## CLI
 
