@@ -101,6 +101,42 @@ def _apply_hsl(rgb: np.ndarray, hsl: dict) -> np.ndarray:
     return cv2.cvtColor(cv2.merge([hue, sat, val]), cv2.COLOR_HSV2RGB) * 255.0
 
 
+def _smoothstep(edge0: float, edge1: float, value: np.ndarray) -> np.ndarray:
+    t = np.clip((value - edge0) / (edge1 - edge0), 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _apply_color_grading(rgb: np.ndarray, settings: dict) -> np.ndarray:
+    """Apply deterministic shadow/midtone/highlight color-wheel tints."""
+    if not settings:
+        return rgb
+    out = np.clip(rgb / 255.0, 0.0, 1.0).astype(np.float32)
+    luminance = out @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    balance = float(settings.get("balance", 0.0)) / 100.0
+    shift = balance * 0.18
+    shadow_weight = 1.0 - _smoothstep(0.18 + shift, 0.62 + shift, luminance)
+    highlight_weight = _smoothstep(0.38 + shift, 0.84 + shift, luminance)
+    mid_weight = np.clip(1.0 - shadow_weight - highlight_weight, 0.0, 1.0)
+    weights = {"shadows": shadow_weight, "midtones": mid_weight, "highlights": highlight_weight}
+
+    for tone, weight in weights.items():
+        cfg = settings.get(tone, {})
+        if not cfg:
+            continue
+        amount = float(cfg.get("saturation", 0.0)) / 100.0
+        if amount == 0.0 and float(cfg.get("luminance", 0.0)) == 0.0:
+            continue
+        hue = float(cfg.get("hue", 0.0))
+        tint_hsv = np.array([[[hue, 1.0, 1.0]]], dtype=np.float32)
+        tint_rgb = cv2.cvtColor(tint_hsv, cv2.COLOR_HSV2RGB)[0, 0]
+        blend = np.clip(amount, 0.0, 1.0) * weight * 0.35
+        out = out * (1.0 - blend[..., None]) + tint_rgb[None, None, :] * blend[..., None]
+        if cfg.get("luminance", 0):
+            out += (float(cfg["luminance"]) / 100.0) * 0.18 * weight[..., None]
+
+    return np.clip(out * 255.0, 0, 255)
+
+
 def _make_region_mask(region: dict, shape: tuple[int, int], recipe_dir: Path) -> np.ndarray:
     h, w = shape
     mask = np.zeros((h, w), dtype=np.uint8)
@@ -160,6 +196,8 @@ def process_array(image: np.ndarray, recipe: dict, recipe_dir: str | Path = ".")
         out = _apply_curves(out, recipe["curves"])
     if recipe.get("hsl"):
         out = _apply_hsl(out, recipe["hsl"])
+    if recipe.get("color_grading"):
+        out = _apply_color_grading(out, recipe["color_grading"])
     if recipe.get("global", {}).get("vignette") or recipe.get("global", {}).get("grain"):
         out = _apply_effects(out, recipe["global"])
 
@@ -193,10 +231,11 @@ def process_file(input_path: str | Path, recipe: dict, output_dir: str | Path) -
     output_cfg = recipe.get("output", {})
     fmt = output_cfg.get("format", "preserve").lower()
     if fmt == "preserve":
-        fmt = image.format.lower() if image.format else "jpeg"
+        source_format = (image.format or "JPEG").upper()
+        fmt = {"JPG": "jpeg", "JPEG": "jpeg", "PNG": "png", "WEBP": "webp"}.get(source_format, "jpeg")
     if fmt == "jpg":
         fmt = "jpeg"
-    pil_format = {"jpeg": "JPEG", "png": "PNG", "webp": "WEBP"}.get(fmt, "JPEG")
+    pil_format = {"jpeg": "JPEG", "png": "PNG", "webp": "WEBP"}[fmt]
     result_img = Image.fromarray(result, "RGB")
     if alpha is not None and pil_format in {"PNG", "WEBP"}:
         result_img.putalpha(alpha)
