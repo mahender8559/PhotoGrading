@@ -32,20 +32,7 @@
     "highlights": {"hue": 42, "saturation": 10, "luminance": 2},
     "balance": 5
   },
-  "regions": [
-    {
-      "name": "face-light-example",
-      "rectangle": [100, 80, 240, 300],
-      "feather": 24,
-      "adjustments": {"exposure_ev": 0.15, "shadows": 8}
-    },
-    {
-      "name": "background-example",
-      "polygon": [[0, 0], [900, 0], [900, 500], [0, 500]],
-      "feather": 30,
-      "adjustments": {"exposure_ev": -0.10, "saturation": -5}
-    }
-  ],
+  "regions": [],
   "output": {
     "format": "preserve",
     "quality": 95,
