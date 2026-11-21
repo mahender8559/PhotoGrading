@@ -39,7 +39,7 @@ def _check_adjustments(adjustments: Any, allowed: set[str], label: str) -> None:
 def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(recipe, dict):
         raise RecipeError("Recipe root must be a JSON object")
-    allowed_top = {"version", "global", "curves", "hsl", "regions", "output"}
+    allowed_top = {"version", "global", "curves", "hsl", "color_grading", "regions", "output"}
     unknown = set(recipe) - allowed_top
     if unknown:
         raise RecipeError(f"Unknown top-level key(s): {', '.join(sorted(unknown))}")
@@ -74,6 +74,21 @@ def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not lo <= value <= hi:
                 raise RecipeError(f"hsl.{colour}.{key} must be between {lo} and {hi}")
 
+    color_grading = recipe.get("color_grading", {})
+    if not isinstance(color_grading, dict) or set(color_grading) - {"shadows", "midtones", "highlights", "balance"}:
+        raise RecipeError("color_grading must contain shadows/midtones/highlights/balance only")
+    for tone in ("shadows", "midtones", "highlights"):
+        values = color_grading.get(tone, {})
+        if not isinstance(values, dict) or set(values) - {"hue", "saturation", "luminance"}:
+            raise RecipeError(f"Invalid color_grading.{tone} settings")
+        for key, value in values.items():
+            lo, hi = (0, 360) if key == "hue" else ((0, 100) if key == "saturation" else (-100, 100))
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not lo <= value <= hi:
+                raise RecipeError(f"color_grading.{tone}.{key} must be between {lo} and {hi}")
+    balance = color_grading.get("balance", 0)
+    if isinstance(balance, bool) or not isinstance(balance, (int, float)) or not -100 <= balance <= 100:
+        raise RecipeError("color_grading.balance must be between -100 and 100")
+
     regions = recipe.get("regions", [])
     if not isinstance(regions, list):
         raise RecipeError("regions must be a list")
@@ -103,7 +118,8 @@ def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     output = recipe.get("output", {})
     if not isinstance(output, dict) or set(output) - {"format", "quality", "suffix", "max_width", "max_height"}:
         raise RecipeError("Invalid output configuration")
-    if output.get("format", "preserve").lower() not in {"preserve", "jpeg", "jpg", "png", "webp"}:
+    output_format = output.get("format", "preserve")
+    if not isinstance(output_format, str) or output_format.lower() not in {"preserve", "jpeg", "jpg", "png", "webp"}:
         raise RecipeError("output.format must be preserve/jpeg/png/webp")
     quality = output.get("quality", 95)
     if isinstance(quality, bool) or not isinstance(quality, int) or not 1 <= quality <= 100:
