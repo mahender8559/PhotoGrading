@@ -34,13 +34,22 @@ Optional arrays of [input, output] points for red, green, blue and master. Value
 ### hsl
 Optional object keyed by red, orange, yellow, green, aqua, blue, purple, magenta. Each colour accepts hue (-180..180 degrees), saturation (-100..100), and luminance (-100..100).
 
+### color_grading
+Optional three-way color grading. Each of shadows, midtones and highlights accepts:
+- hue: 0..360 degrees on the color wheel.
+- saturation: 0..100; 0 disables the tint, higher values add more of the selected hue to that tonal zone.
+- luminance: -100..100; adjusts the luminance of that tonal zone.
+- balance: -100..100; shifts the tonal weighting boundary toward shadows or highlights.
+
+This is a deterministic RGB tint blend weighted by luminance zones, not a camera-RAW colour-science pipeline.
+
 ### regions
 Each region contains exactly one selector:
 - rectangle: [x, y, width, height]
 - polygon: [[x,y], ...]
 - mask: image path
 
-Each region has optional feather (0..200 pixels) and adjustments. Local adjustments support exposure_ev, contrast, brightness, highlights, shadows, temperature, tint, saturation, vibrance, RGB gains, gamma and sharpen. HSL/curves/effects are global-only in v1.
+Each region has optional feather (0..200 pixels) and adjustments. Local adjustments support exposure_ev, contrast, brightness, highlights, shadows, temperature, tint, saturation, vibrance, RGB gains, gamma and sharpen. HSL, curves, three-way color grading and vignette/grain are global-only in v1.
 
 ### output
 - format: preserve, JPEG, PNG or WEBP.
