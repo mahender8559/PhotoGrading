@@ -74,3 +74,35 @@ def test_sample_recipe_is_valid():
 
     recipe = load_recipe(Path("recipes") / "example.json")
     assert recipe["version"] == 1
+
+
+
+def test_grayscale_mask_adjustment(tmp_path):
+    from PIL import Image
+
+    arr = np.full((20, 20, 3), 80, dtype=np.uint8)
+    mask = np.zeros((20, 20), dtype=np.uint8)
+    mask[5:15, 5:15] = 255
+    Image.fromarray(mask, "L").save(tmp_path / "mask.png")
+    recipe = {"version": 1, "global": {}, "regions": [
+        {"mask": "mask.png", "adjustments": {"exposure_ev": 1}}
+    ]}
+    result = process_array(arr, recipe, recipe_dir=tmp_path)
+    assert result[10, 10, 0] > arr[10, 10, 0]
+    assert result[0, 0, 0] == arr[0, 0, 0]
+
+
+def test_local_mask_example_recipe_is_valid():
+    from photograding.recipe import load_recipe
+    from pathlib import Path
+
+    recipe = load_recipe(Path("recipes") / "local_masks_example.json")
+    assert len(recipe["regions"]) == 2
+
+
+def test_output_never_overwrites_original(tmp_path):
+    source = tmp_path / "photo.png"
+    Image.new("RGB", (8, 8), (50, 60, 70)).save(source)
+    recipe = {"version": 1, "global": {}, "output": {"format": "preserve", "suffix": ""}}
+    with pytest.raises(ValueError, match="overwrite the original"):
+        process_file(source, recipe, tmp_path)
