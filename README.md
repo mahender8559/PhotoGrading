@@ -12,6 +12,7 @@ A deterministic, parameter-driven photo processing tool. Supply an image and a J
 - Optional feathering/blur on geometric masks.
 - Vignette, grain, sharpening and resize/output settings.
 - Streamlit test interface with before/after preview.
+- HEIC/HEIF input support via pillow-heif, including EXIF orientation handling.
 - Original files are never overwritten.
 
 ## Windows quick start
@@ -44,6 +45,6 @@ Parameter definitions are explicit in the recipe documentation. Operations are d
 
 ## Notes
 
-- V1 loads ordinary raster formats supported by Pillow. RAW camera files are not yet supported.
+- Supported inputs include JPEG, PNG, WebP, TIFF, BMP and HEIC/HEIF. HEIC/HEIF decoding is provided by pillow-heif. When output format is set to "preserve", HEIC/HEIF inputs are exported as JPEG; explicit JPEG, PNG and WebP output options are also available. RAW camera files are not yet supported.
 - Processing is performed in 8-bit sRGB for this initial test build. A later version can add higher-bit-depth/linear-light workflows.
 - Face targeting is intentionally not automatic. Supply a mask image or coordinates when you want a local adjustment.
