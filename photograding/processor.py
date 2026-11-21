@@ -3,7 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import cv2
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
+
+# Register HEIC/HEIF with Pillow when the optional decoder is installed.
+# It is a required project dependency, but keeping this import optional allows
+# ordinary raster formats to remain usable in a partially installed environment.
+try:
+    from pillow_heif import register_heif_opener
+except ImportError:  # pragma: no cover - exercised only in incomplete installs
+    register_heif_opener = None
+else:
+    register_heif_opener(thumbnails=False)
 
 from .recipe import validate_recipe, GLOBAL_RANGES
 
@@ -208,13 +218,40 @@ def process_array(image: np.ndarray, recipe: dict, recipe_dir: str | Path = ".")
     return np.clip(out, 0, 255).astype(np.uint8)
 
 
-def load_image(path: str | Path) -> Image.Image:
-    image = Image.open(path)
-    source_format = image.format
-    image = ImageOps.exif_transpose(image)
-    image.info["_source_format"] = source_format
+def load_image(source, filename: str | Path | None = None) -> Image.Image:
+    """Load an image path or binary stream and apply its EXIF orientation.
+
+    filename is used to provide a clear error when an in-memory HEIC upload
+    cannot be decoded.
+    """
+    source_name = filename or getattr(source, "name", "")
+    if not source_name and isinstance(source, (str, Path)):
+        source_name = source
+    source_suffix = Path(str(source_name)).suffix.lower()
+    is_heif = source_suffix in {".heic", ".heif", ".heics", ".heifs", ".hif"}
+
+    if is_heif and register_heif_opener is None:
+        raise RuntimeError(
+            "HEIC/HEIF support requires pillow-heif. Install project dependencies "
+            "with: python -m pip install -r requirements.txt"
+        )
+
+    try:
+        with Image.open(source) as opened:
+            source_format = opened.format
+            image = ImageOps.exif_transpose(opened)
+            image.load()
+    except UnidentifiedImageError as exc:
+        if is_heif:
+            raise RuntimeError(
+                f"Could not decode {source_name}. Check that it is a valid HEIC/HEIF file "
+                "and that pillow-heif is installed."
+            ) from exc
+        raise
+
     if image.mode not in {"RGB", "RGBA"}:
         image = image.convert("RGB")
+    image.info["_source_format"] = source_format
     if image.mode == "RGBA":
         # Keep alpha separate for safe RGB-only grading, then recombine.
         return image
