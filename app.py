@@ -7,11 +7,11 @@ import tempfile
 import time
 
 import streamlit as st
-from PIL import Image, ImageOps
+from PIL import Image
 import numpy as np
 
 from photograding.recipe import validate_recipe, RecipeError
-from photograding.processor import process_array
+from photograding.processor import process_array, load_image
 
 st.set_page_config(page_title="PhotoGrading", page_icon="🎨", layout="wide")
 st.title("PhotoGrading")
@@ -27,7 +27,7 @@ with st.sidebar:
         recipe_text = default_recipe_path.read_text(encoding="utf-8")
     st.download_button("Download current recipe", recipe_text, file_name="photo_recipe.json", mime="application/json")
 
-photo = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "webp", "tif", "tiff", "bmp"])
+photo = st.file_uploader("Choose a photo", type=["jpg", "jpeg", "png", "webp", "tif", "tiff", "bmp", "heic", "heif"])
 recipe_text = st.text_area("Editing parameters (JSON)", recipe_text, height=440)
 mask_uploads = st.file_uploader(
     "Optional mask images referenced by the recipe",
@@ -40,9 +40,9 @@ if photo:
     try:
         recipe = json.loads(recipe_text)
         validate_recipe({k: v for k, v in recipe.items() if not k.startswith("_")})
-        raw = Image.open(photo)
-        source_format = (raw.format or Path(photo.name).suffix.lstrip(".") or "JPEG").upper()
-        image = ImageOps.exif_transpose(raw).convert("RGB")
+        image = load_image(BytesIO(photo.getvalue()), filename=photo.name)
+        source_format = (image.info.get("_source_format") or Path(photo.name).suffix.lstrip(".") or "JPEG").upper()
+        image = image.convert("RGB")
         # Uploaded masks are copied into a temporary workspace for this run.
         with tempfile.TemporaryDirectory(prefix="photograding_masks_") as mask_dir:
             uploaded_by_name = {}
@@ -86,7 +86,7 @@ if photo:
         save_kwargs = {"quality": output_cfg.get("quality", 95)} if selected_format in {"jpeg", "webp"} else {}
         output.save(buf, format=image_format, **save_kwargs)
         st.download_button("Download edited image", buf.getvalue(), file_name=f"{Path(photo.name).stem}{output_cfg.get('suffix', '_graded')}.{extension}", mime=mime, type="primary")
-    except (json.JSONDecodeError, RecipeError, ValueError, OSError, FileNotFoundError) as exc:
+    except (json.JSONDecodeError, RecipeError, ValueError, OSError, FileNotFoundError, RuntimeError) as exc:
         st.error(f"Could not process image: {exc}")
 else:
     st.info("Upload a photo to preview the recipe. The original image is never modified.")
