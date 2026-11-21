@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from io import BytesIO
 
 import streamlit as st
 from PIL import Image, ImageOps
@@ -33,6 +34,7 @@ if photo:
         recipe = json.loads(recipe_text)
         validate_recipe({k: v for k, v in recipe.items() if not k.startswith("_")})
         raw = Image.open(photo)
+        source_format = (raw.format or Path(photo.name).suffix.lstrip(".") or "JPEG").upper()
         image = ImageOps.exif_transpose(raw).convert("RGB")
         arr = np.asarray(image)
         edited = process_array(arr, recipe)
@@ -44,10 +46,22 @@ if photo:
             st.subheader("Edited")
             st.image(edited, use_container_width=True)
         output = Image.fromarray(edited, "RGB")
-        buf = tempfile.SpooledTemporaryFile()
-        output.save(buf, format="JPEG", quality=95)
-        buf.seek(0)
-        st.download_button("Download edited image", buf.getvalue(), file_name=f"{Path(photo.name).stem}_graded.jpg", mime="image/jpeg", type="primary")
+        output_cfg = recipe.get("output", {})
+        selected_format = output_cfg.get("format", "preserve").lower()
+        if selected_format == "preserve":
+            selected_format = {"JPG": "jpeg", "JPEG": "jpeg", "PNG": "png", "WEBP": "webp"}.get(source_format, "jpeg")
+        if selected_format == "jpg":
+            selected_format = "jpeg"
+        image_format = {"jpeg": "JPEG", "png": "PNG", "webp": "WEBP"}[selected_format]
+        mime = {"jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[selected_format]
+        extension = {"jpeg": "jpg", "png": "png", "webp": "webp"}[selected_format]
+        max_w, max_h = output_cfg.get("max_width"), output_cfg.get("max_height")
+        if max_w or max_h:
+            output.thumbnail((max_w or output.width, max_h or output.height), Image.Resampling.LANCZOS)
+        buf = BytesIO()
+        save_kwargs = {"quality": output_cfg.get("quality", 95)} if selected_format in {"jpeg", "webp"} else {}
+        output.save(buf, format=image_format, **save_kwargs)
+        st.download_button("Download edited image", buf.getvalue(), file_name=f"{Path(photo.name).stem}{output_cfg.get('suffix', '_graded')}.{extension}", mime=mime, type="primary")
     except (json.JSONDecodeError, RecipeError, ValueError, OSError, FileNotFoundError) as exc:
         st.error(f"Could not process image: {exc}")
 else:
