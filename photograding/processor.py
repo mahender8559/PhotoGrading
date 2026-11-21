@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import math
 import numpy as np
 import cv2
 from PIL import Image, ImageOps
@@ -211,7 +210,9 @@ def process_array(image: np.ndarray, recipe: dict, recipe_dir: str | Path = ".")
 
 def load_image(path: str | Path) -> Image.Image:
     image = Image.open(path)
+    source_format = image.format
     image = ImageOps.exif_transpose(image)
+    image.info["_source_format"] = source_format
     if image.mode not in {"RGB", "RGBA"}:
         image = image.convert("RGB")
     if image.mode == "RGBA":
@@ -231,7 +232,7 @@ def process_file(input_path: str | Path, recipe: dict, output_dir: str | Path) -
     output_cfg = recipe.get("output", {})
     fmt = output_cfg.get("format", "preserve").lower()
     if fmt == "preserve":
-        source_format = (image.format or "JPEG").upper()
+        source_format = (image.info.get("_source_format") or image.format or "JPEG").upper()
         fmt = {"JPG": "jpeg", "JPEG": "jpeg", "PNG": "png", "WEBP": "webp"}.get(source_format, "jpeg")
     if fmt == "jpg":
         fmt = "jpeg"
@@ -244,6 +245,8 @@ def process_file(input_path: str | Path, recipe: dict, output_dir: str | Path) -
         result_img.thumbnail((max_w or result_img.width, max_h or result_img.height), Image.Resampling.LANCZOS)
     suffix = output_cfg.get("suffix", "_graded")
     output_path = output_dir / f"{input_path.stem}{suffix}.{fmt}"
+    if output_path.resolve() == input_path.resolve():
+        raise ValueError("Refusing to overwrite the original image. Choose a different output directory or suffix.")
     save_kwargs = {}
     if pil_format in {"JPEG", "WEBP"}:
         save_kwargs["quality"] = output_cfg.get("quality", 95)
