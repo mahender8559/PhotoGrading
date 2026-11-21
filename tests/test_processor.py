@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
+from PIL import Image
 
-from photograding.processor import process_array
+from photograding.processor import process_array, process_file
 from photograding.recipe import validate_recipe, RecipeError
 
 
@@ -37,6 +38,31 @@ def test_polygon_mask_adjustment():
     assert result[0, 0, 0] == arr[0, 0, 0]
 
 
+def test_three_way_color_grading_changes_selected_tone():
+    arr = np.full((20, 20, 3), [75, 75, 75], dtype=np.uint8)
+    recipe = {"version": 1, "global": {}, "color_grading": {
+        "shadows": {"hue": 210, "saturation": 40}
+    }}
+    result = process_array(arr, recipe)
+    assert not np.array_equal(result, arr)
+
+
 def test_unknown_parameter_rejected():
     with pytest.raises(RecipeError):
         validate_recipe({"version": 1, "global": {"exposre_ev": 1}})
+
+
+def test_invalid_output_format_rejected():
+    with pytest.raises(RecipeError):
+        validate_recipe({"version": 1, "output": {"format": 42}})
+
+
+def test_png_output_preserves_original_file(tmp_path):
+    source = tmp_path / "source.png"
+    Image.new("RGB", (12, 8), (80, 90, 100)).save(source)
+    recipe = {"version": 1, "global": {"exposure_ev": 0.2},
+              "output": {"format": "preserve", "suffix": "_graded"}}
+    result = process_file(source, recipe, tmp_path / "output")
+    assert result.suffix == ".png"
+    assert source.exists()
+    assert Image.open(source).size == Image.open(result).size
