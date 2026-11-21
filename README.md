@@ -38,7 +38,7 @@ python -m photograding.cli process --input photo.jpg --recipe recipes/example.js
 
 ## Recipe format
 
-See `recipes/example.json` and `docs/RECIPE_FORMAT.md`. Coordinates use pixel coordinates in the original image: rectangle [x, y, width, height], polygon [[x,y], ...]. For a mask file, white means full effect and black means no effect.
+See `recipes/example.json` for a global grade, `recipes/local_masks_example.json` for rectangle/mask-based local edits, and `docs/RECIPE_FORMAT.md` for the full specification. Coordinates use pixel coordinates in the original image: rectangle [x, y, width, height], polygon [[x,y], ...]. For a mask file, white means full effect and black means no effect.
 
 Parameter definitions are explicit in the recipe documentation. Operations are deterministic and applied in a documented order. The implementation uses Pillow and NumPy for predictable pixel operations; OpenCV is used for spatial masks/blur where appropriate.
 
