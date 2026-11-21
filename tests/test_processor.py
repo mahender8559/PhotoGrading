@@ -141,3 +141,24 @@ def test_load_image_applies_exif_orientation(tmp_path):
 
     loaded = load_image(source)
     assert loaded.size == (8, 12)
+
+
+def test_canvas_image_to_mask_converts_and_resizes_rgba():
+    from photograding.masks import canvas_image_to_mask
+
+    canvas = np.zeros((4, 4, 4), dtype=np.uint8)
+    canvas[..., 3] = 255
+    canvas[1:3, 1:3, :3] = 255
+    result = canvas_image_to_mask(canvas, output_size=(8, 8))
+
+    assert result.shape == (8, 8)
+    assert result.max() == 255
+    assert result.min() == 0
+    assert result[3, 3] == 255
+
+
+def test_canvas_image_to_mask_rejects_invalid_array():
+    from photograding.masks import canvas_image_to_mask
+
+    with pytest.raises(ValueError, match="RGB or RGBA"):
+        canvas_image_to_mask(np.zeros((4, 4), dtype=np.uint8), output_size=(4, 4))
