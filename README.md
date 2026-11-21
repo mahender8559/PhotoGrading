@@ -16,10 +16,10 @@ A deterministic, parameter-driven photo processing tool. Supply an image and a J
 
 ## Windows quick start
 
-Requires Python 3.11+.
+Recommended: Python 3.14 (3.11 is also supported). Python 3.15 is not yet validated with the OpenCV dependency used here.
 
 ```powershell
-py -3.11 -m venv .venv
+py -3.14 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
