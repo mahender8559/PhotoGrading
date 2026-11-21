@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from io import BytesIO
+import time
 
 import streamlit as st
 from PIL import Image, ImageOps
@@ -37,7 +37,10 @@ if photo:
         source_format = (raw.format or Path(photo.name).suffix.lstrip(".") or "JPEG").upper()
         image = ImageOps.exif_transpose(raw).convert("RGB")
         arr = np.asarray(image)
+        started = time.perf_counter()
         edited = process_array(arr, recipe)
+        elapsed = time.perf_counter() - started
+        st.caption(f"Processed {image.width:,} × {image.height:,} ({image.width * image.height / 1_000_000:.1f} MP) in {elapsed:.3f} seconds.")
         left, right = st.columns(2)
         with left:
             st.subheader("Original")
