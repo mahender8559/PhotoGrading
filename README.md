@@ -16,7 +16,7 @@ A deterministic, parameter-driven photo processing tool. Supply an image and a J
 
 ## Windows quick start
 
-Requires Python 3.10+.
+Requires Python 3.11+.
 
 ```powershell
 py -3.11 -m venv .venv
