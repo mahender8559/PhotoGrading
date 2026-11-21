@@ -7,6 +7,7 @@ A deterministic, parameter-driven photo processing tool. Supply an image and a J
 - Global exposure (EV), contrast, highlights, shadows, temperature, tint, saturation and vibrance.
 - RGB channel gains and tone curves.
 - HSL adjustments by colour range.
+- Three-way colour grading: shadows, midtones and highlights with hue, saturation, luminance and balance.
 - Local adjustments using rectangles, polygons or grayscale mask images.
 - Optional feathering/blur on geometric masks.
 - Vignette, grain, sharpening and resize/output settings.
