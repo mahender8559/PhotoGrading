@@ -287,6 +287,21 @@ else:
                 key=f"layer-feather-{image_id}-{layer_slug}",
                 help="Softens the mask edge to reduce visible transitions.",
             )
+            current_adjustments = {
+                "exposure_ev": local_exposure,
+                "contrast": local_contrast,
+                "highlights": local_highlights,
+                "shadows": local_shadows,
+                "temperature": local_temperature,
+                "tint": local_tint,
+                "saturation": local_saturation,
+                "vibrance": local_vibrance,
+                "sharpen": local_sharpen,
+            }
+            # Once a layer exists, its sliders update the live preview immediately.
+            if layer_slug in image_layers:
+                image_layers[layer_slug]["adjustments"] = current_adjustments
+                image_layers[layer_slug]["feather"] = feather
 
             if st.button("Save / update this layer", type="primary", key=f"save-layer-{image_id}-{layer_slug}"):
                 if canvas_result.image_data is None:
@@ -301,22 +316,11 @@ else:
                     else:
                         mask_path = MASKS_DIR / f"{image_id}_{layer_slug}.png"
                         Image.fromarray(mask, mode="L").save(mask_path)
-                        adjustments = {
-                            "exposure_ev": local_exposure,
-                            "contrast": local_contrast,
-                            "highlights": local_highlights,
-                            "shadows": local_shadows,
-                            "temperature": local_temperature,
-                            "tint": local_tint,
-                            "saturation": local_saturation,
-                            "vibrance": local_vibrance,
-                            "sharpen": local_sharpen,
-                        }
                         image_layers[layer_slug] = {
                             "name": layer_name.strip() or layer_slug,
                             "mask_path": str(mask_path.resolve()),
                             "feather": feather,
-                            "adjustments": adjustments,
+                            "adjustments": current_adjustments,
                         }
                         st.success(f"Saved layer: {layer_name.strip() or layer_slug}")
 
