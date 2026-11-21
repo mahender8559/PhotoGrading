@@ -17,8 +17,8 @@ if not errorlevel 1 (
         echo.
         echo Install Python 3.14 from:
         echo https://www.python.org/downloads/release/python-31410/
-        echo Also install the Python Launcher / Python install manager.
-        echo Then open a NEW terminal and run: py install 3.14
+        echo Install Python 3.14 using the standard Windows installer from that page.
+        echo Then open a NEW terminal and confirm with: py -3.14 --version
         echo Finally double-click this file again.
         pause
         exit /b 1
