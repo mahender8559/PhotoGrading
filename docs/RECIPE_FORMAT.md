@@ -57,6 +57,10 @@ Each region has optional feather (0..200 pixels) and adjustments. Local adjustme
 - suffix: output filename suffix.
 - max_width, max_height: optional maximum dimensions; aspect ratio is preserved.
 
+## Supported input formats
+
+JPEG, PNG, WebP, TIFF, BMP and HEIC/HEIF are supported. HEIC/HEIF decoding is provided by the pillow-heif dependency. EXIF orientation is applied immediately after decoding. When output.format is preserve, HEIC/HEIF inputs are exported as JPEG; v1 output formats are JPEG, PNG and WebP.
+
 ## Processing order
 
 1. Decode image and apply EXIF orientation.
