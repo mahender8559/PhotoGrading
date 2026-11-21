@@ -57,4 +57,15 @@ Each region has optional feather (0..200 pixels) and adjustments. Local adjustme
 - suffix: output filename suffix.
 - max_width, max_height: optional maximum dimensions; aspect ratio is preserved.
 
-See recipes/example.json for a complete example.
+## Processing order
+
+1. Decode image and apply EXIF orientation.
+2. Apply global exposure, contrast, brightness, highlights/shadows, white balance, saturation/vibrance, gamma and sharpening.
+3. Apply master/RGB curves.
+4. Apply HSL colour-range adjustments.
+5. Apply three-way color grading.
+6. Apply global vignette and grain.
+7. Apply local regions in the order listed in the recipe; each region blends its adjusted result through its mask.
+8. Resize (if configured) and encode the output.
+
+See `recipes/example.json` for a complete example.
