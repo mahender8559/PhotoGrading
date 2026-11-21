@@ -26,6 +26,12 @@
     "green": {"hue": -5, "saturation": -8, "luminance": 0},
     "blue": {"hue": 0, "saturation": -5, "luminance": -2}
   },
+  "color_grading": {
+    "shadows": {"hue": 205, "saturation": 12, "luminance": -2},
+    "midtones": {"hue": 32, "saturation": 5, "luminance": 1},
+    "highlights": {"hue": 42, "saturation": 10, "luminance": 2},
+    "balance": 5
+  },
   "regions": [
     {
       "name": "face-light-example",
