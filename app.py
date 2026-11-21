@@ -150,12 +150,13 @@ else:
     try:
         image_bytes = photo.getvalue()
         image_id = sha256(image_bytes).hexdigest()[:16]
-        source_image = load_image(BytesIO(image_bytes), filename=photo.name).convert("RGB")
+        loaded_image = load_image(BytesIO(image_bytes), filename=photo.name)
         source_format = (
-            source_image.info.get("_source_format")
+            loaded_image.info.get("_source_format")
             or Path(photo.name).suffix.lstrip(".")
             or "JPEG"
         ).upper()
+        source_image = loaded_image.convert("RGB")
 
         recipe = json.loads(recipe_text)
         validate_recipe(recipe)
