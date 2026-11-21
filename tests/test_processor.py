@@ -66,3 +66,11 @@ def test_png_output_preserves_original_file(tmp_path):
     assert result.suffix == ".png"
     assert source.exists()
     assert Image.open(source).size == Image.open(result).size
+
+
+def test_sample_recipe_is_valid():
+    from photograding.recipe import load_recipe
+    from pathlib import Path
+
+    recipe = load_recipe(Path("recipes") / "example.json")
+    assert recipe["version"] == 1
